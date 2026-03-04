@@ -712,6 +712,11 @@ if (fen) {
   game.load(decodeURIComponent(fen));
   buildBoard();
 }
+
+// If bot mode and bot goes first (player is black), trigger bot move
+if (botMode && myColor === 'black') {
+  setTimeout(botMove, 800);
+}
 </script>
 </body>
 </html>

@@ -572,7 +572,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 
   <div class="profile-hero">
     <div class="profile-big-avatar" id="prof-avatar">♟
-      <div class="profile-online"></div>
+      
     </div>
     <div class="profile-hero-info">
       <div class="profile-hero-name">
@@ -948,12 +948,12 @@ function renderProfile(){
   // Avatar
   const av=document.getElementById('prof-avatar');
   if(ME.photo&&ME.avatar==='tg'){
-    av.innerHTML=`<img src="${ME.photo}"><div class="profile-online"></div>`;
+    av.innerHTML=`<img src="${ME.photo}">`;
   } else if(ME.avatar&&ME.avatar!=='tg'){
-    av.innerHTML=`<span style="font-size:32px">${ME.avatar}</span><div class="profile-online"></div>`;
+    av.innerHTML=`<span style="font-size:32px">${ME.avatar}</span>`;
   } else {
     const i=ME.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    av.innerHTML=`<span style="font-size:28px;font-family:'Playfair Display',serif;font-weight:700">${i}</span><div class="profile-online"></div>`;
+    av.innerHTML=`<span style="font-size:28px;font-family:'Playfair Display',serif;font-weight:700">${i}</span>`;
   }
   // Achievements
   const al=document.getElementById('achievements-list');
@@ -1121,8 +1121,23 @@ function selectColor(c){
 }
 function startGame(){
   document.getElementById('play-modal').classList.remove('show');
-  if(tg) tg.sendData(JSON.stringify({type:'play',mode:selMode,tc:selTC,color:selColor}));
-  toast(selMode==='bot'?'🤖 Starting bot game…':selMode==='friend'?'⚔️ Challenge sent!':'🔍 Finding opponent…');
+  // Open the chess board mini app directly
+  const base = window.location.origin + window.location.pathname.replace('index.html','');
+  const boardUrl = base + 'chess_miniapp.html?color=' + selColor + '&timer=' + (selTC||'600')
+    + '&bot=' + (selMode==='bot'?'1':'0')
+    + '&opp_name=' + (selMode==='bot'?'Chess+Bot':'Opponent')
+    + '&opp_elo=1200&opp_level=1'
+    + '&my_name=' + encodeURIComponent(ME.name)
+    + '&my_elo=' + ME.elo + '&my_level=' + ME.level;
+  if(tg){
+    // Notify bot
+    tg.sendData(JSON.stringify({type:'play',mode:selMode,tc:selTC,color:selColor}));
+    // Open board
+    tg.openLink(boardUrl);
+  } else {
+    window.location.href = boardUrl;
+  }
+  if(selMode==='friend') toast('⚔️ Challenge sent!');
 }
 
 // ── Edit profile ───────────────────────────────────────────────────────────
@@ -1176,7 +1191,7 @@ function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('show');
   clearTimeout(toastT);
-  toastT=setTimeout(()=>el.classList.remove('show'),2500);
+  toastT=setTimeout(()=>el.classList.remove('show'),1500);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
