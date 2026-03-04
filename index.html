@@ -45,8 +45,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;
   cursor:pointer;transition:all .2s;color:var(--dim);font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
 .nav-btn.active{color:var(--accent)}
-.nav-icon{font-size:20px;transition:transform .2s}
-.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-icon{font-size:20px;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nav-btn.active .nav-icon{transform:scale(1.2)}
+.nav-btn:active .nav-icon{transform:scale(0.85)!important}
+@keyframes navPop{0%{transform:scale(1)}40%{transform:scale(1.35)}70%{transform:scale(0.95)}100%{transform:scale(1.2)}}
+.nav-btn.pop .nav-icon{animation:navPop .35s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes cardTap{0%{transform:scale(1)}50%{transform:scale(0.94)}100%{transform:scale(1)}}
+.play-card:active{animation:cardTap .2s ease!important;transform:scale(0.94)}
+@keyframes ripple{0%{transform:scale(0);opacity:.6}100%{transform:scale(2.5);opacity:0}}
+.ripple-dot{position:absolute;width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.15);pointer-events:none;
+  animation:ripple .5s ease-out forwards;transform-origin:center;margin:-20px}
 
 /* ══════════════════════════════════════════
    HOME PAGE
@@ -72,9 +81,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   padding:1px 7px;font-size:11px;font-weight:600}
 .notif-btn{width:36px;height:36px;background:var(--s2);border-radius:50%;
   display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
-  border:1px solid var(--border);position:relative;flex-shrink:0}
-.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;
-  background:var(--red);border-radius:50%;border:2px solid var(--s1)}
+  border:1px solid var(--border);position:relative;flex-shrink:0;transition:border-color .2s}
+.notif-btn:hover{border-color:var(--border2)}
+.notif-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;
+  background:var(--red);border-radius:50%;border:2px solid var(--s1);
+  display:none;animation:pulseDot 2s infinite}
+.notif-dot.visible{display:block}
+@keyframes pulseDot{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+#notif-popup{display:none;position:fixed;top:60px;right:10px;width:280px;
+  background:var(--s1);border:1px solid var(--border2);border-radius:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:300;overflow:hidden;
+  animation:popIn .2s cubic-bezier(.34,1.56,.64,1)}
+#notif-popup.show{display:block}
+@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(-8px)}to{opacity:1;transform:none}}
+.notif-header{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px 8px;border-bottom:1px solid var(--border)}
+.notif-header-title{font-family:'Playfair Display',serif;font-weight:700;font-size:15px}
+.notif-clear{font-size:11px;color:var(--accent);cursor:pointer;font-weight:600}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .15s}
+.notif-item:hover{background:var(--s2)}
+.notif-item:last-child{border-bottom:none}
+.notif-item.unread{background:rgba(158,158,158,.05)}
+.notif-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+.notif-text{flex:1;min-width:0}
+.notif-msg{font-size:13px;font-weight:500;line-height:1.4}
+.notif-time{font-size:11px;color:var(--dim2);margin-top:2px}
+.notif-empty{padding:20px;text-align:center;color:var(--dim2);font-size:13px}
 
 /* Daily streak banner */
 .streak-bar{
@@ -196,7 +229,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   padding:20px 16px 32px;animation:slideUp .3s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto}
 .modal-sheet::-webkit-scrollbar{width:0}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 18px}
+.sheet-handle{width:44px;height:5px;background:var(--border2);border-radius:3px;margin:0 auto 18px;
+  cursor:grab;transition:background .2s}
+.sheet-handle:hover{background:var(--accent)}
+.sheet-handle:active{cursor:grabbing}
 .modal-title{font-family:'Playfair Display',serif;font-weight:700;font-size:20px;margin-bottom:4px}
 .modal-sub{font-size:13px;color:var(--dim2);margin-bottom:18px}
 
@@ -434,8 +470,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         <span id="hdr-level" style="color:var(--dim2)">Lv.1</span>
       </div>
     </div>
-    <div class="notif-btn" onclick="toast('No new notifications')">
-      🔔<div class="notif-dot"></div>
+    <div class="notif-btn" id="notif-btn" onclick="toggleNotifPopup(event)">
+      🔔<div class="notif-dot" id="notif-dot"></div>
     </div>
   </div>
 
@@ -659,22 +695,63 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <div style="display:flex;flex-direction:column;gap:6px;padding:0 14px" id="friends-all"></div>
 </div>
 
+<!-- Notification popup -->
+<div id="notif-popup">
+  <div class="notif-header">
+    <span class="notif-header-title">🔔 Notifications</span>
+    <span class="notif-clear" onclick="clearNotifs()">Mark all read</span>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
 <!-- ══════ BOTTOM NAV ══════ -->
 <div id="nav">
-  <div class="nav-btn active" onclick="switchPage('home')" id="navbtn-home">
+  <div class="nav-btn active" onclick="navTap(this,'home')" id="navbtn-home">
     <span class="nav-icon">🏠</span><span>Home</span>
   </div>
-  <div class="nav-btn" onclick="switchPage('ranking')" id="navbtn-ranking">
+  <div class="nav-btn" onclick="navTap(this,'ranking')" id="navbtn-ranking">
     <span class="nav-icon">🏆</span><span>Ranking</span>
   </div>
-  <div class="nav-btn" onclick="openPlay('rapid')" id="navbtn-play">
+  <div class="nav-btn" onclick="navTap(this,'play')" id="navbtn-play">
     <span class="nav-icon" style="font-size:28px;margin-top:-4px">⚡</span><span>Play</span>
   </div>
-  <div class="nav-btn" onclick="switchPage('friends')" id="navbtn-friends">
+  <div class="nav-btn" onclick="navTap(this,'friends')" id="navbtn-friends">
     <span class="nav-icon">👥</span><span>Friends</span>
   </div>
-  <div class="nav-btn" onclick="switchPage('profile')" id="navbtn-profile">
+  <div class="nav-btn" onclick="navTap(this,'profile')" id="navbtn-profile">
     <span class="nav-icon">👤</span><span>Profile</span>
+  </div>
+</div>
+
+
+<!-- ══════ FRIEND INVITE MODAL ══════ -->
+<div class="modal-overlay" id="invite-modal" onclick="closeModal('invite-modal',event)">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="modal-title">👥 Invite a Friend</div>
+    <div class="modal-sub">Share this link — they'll play as Black</div>
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center">
+      <div style="font-size:11px;color:var(--dim2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.8px">Game ID</div>
+      <div id="invite-game-id" style="font-family:'Playfair Display',serif;font-weight:800;font-size:28px;letter-spacing:4px;color:var(--accent)">——</div>
+    </div>
+    <input id="invite-link" readonly style="width:100%;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--dim2);font-size:11px;margin-bottom:12px;outline:none" value=""/>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="play-go" id="invite-copy-btn">📋 Copy Link</button>
+      <button class="play-go" id="invite-share-btn" style="display:none;background:var(--s3);border:1px solid var(--border)">📤 Share via Telegram</button>
+      <button class="play-go" id="invite-host-btn" style="background:var(--s3);border:1px solid var(--border)">♟️ Start as White (wait for friend)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PUZZLE MODAL ══════ -->
+<div class="modal-overlay" id="puzzle-modal" onclick="closeModal('puzzle-modal',event)">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="modal-title">🧩 Daily Puzzle</div>
+    <div class="modal-sub" id="puzzle-modal-sub">Find the best move — White to move</div>
+    <div id="puzzle-board-big" style="width:100%;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border-radius:10px;overflow:hidden;margin-bottom:14px"></div>
+    <div id="puzzle-status" style="text-align:center;padding:10px;font-weight:600;font-size:14px;min-height:40px;color:var(--accent)"></div>
+    <button class="play-go" onclick="document.getElementById('puzzle-modal').classList.remove('show')" style="background:var(--s3);border:1px solid var(--border)">Close</button>
   </div>
 </div>
 
@@ -1200,24 +1277,74 @@ function selectColor(c){
 }
 function startGame(){
   document.getElementById('play-modal').classList.remove('show');
-  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/+$/,'/');
-  const isBot = selMode==='bot';
-  // Bot difficulty
-  const botDiff = {'bot_easy':'1','bot_med':'2','bot_hard':'3'}[selTC]||'1';
-  const botElo  = {'bot_easy':'800','bot_med':'1400','bot_hard':'2000'}[selTC]||'1200';
-  const timer   = isBot ? '600' : (selTC||'600');
-  const boardUrl = base + 'chess_miniapp.html'
-    + '?color=' + selColor
-    + '&timer=' + timer
-    + '&bot='   + (isBot?'1':'0')
+  const base = window.location.origin + window.location.pathname.replace('index.html','');
+
+  if(selMode === 'friend'){
+    openFriendInvite(selTC || '600');
+    return;
+  }
+
+  let timer = selTC || '600';
+  let botDiff = '1', botElo = '1200';
+  if(selMode === 'bot' && selTC && selTC.includes('|')){
+    const p = selTC.split('|');
+    timer = p[0]; botDiff = p[1];
+    botElo = ['800','1200','1600'][parseInt(botDiff)-1] || '1200';
+  }
+
+  const color = selColor === 'random' ? (Math.random()>.5?'white':'black') : selColor;
+
+  const url = base + 'chess_miniapp.html'
+    + '?color='    + color
+    + '&timer='    + timer
+    + '&bot='      + (selMode==='bot'?'1':'0')
     + '&bot_diff=' + botDiff
-    + '&opp_name=' + (isBot?encodeURIComponent('Chess Bot'):'Opponent')
-    + '&opp_elo='  + (isBot?botElo:'1200')
-    + '&opp_level=1'
+    + '&local2p='  + (selMode==='custom'?'1':'0')
+    + '&opp_name=' + (selMode==='bot'?encodeURIComponent('Chess Bot'):'Opponent')
+    + '&opp_elo='  + botElo + '&opp_level=1'
     + '&my_name='  + encodeURIComponent(ME.name)
-    + '&my_elo='   + ME.elo
-    + '&my_level=' + ME.level;
-  window.location.href = boardUrl;
+    + '&my_elo='   + ME.elo + '&my_level=' + ME.level;
+
+  window.location.href = url;
+}
+
+function openFriendInvite(timer){
+  const base = window.location.origin + window.location.pathname.replace('index.html','');
+  const gameId = Math.random().toString(36).slice(2,8).toUpperCase();
+  const guestUrl = base + 'chess_miniapp.html'
+    + '?color=black&timer=' + timer + '&game_id=' + gameId
+    + '&opp_name=' + encodeURIComponent(ME.name) + '&opp_elo=' + ME.elo + '&opp_level=' + ME.level
+    + '&my_name=Friend&my_elo=1200&my_level=1';
+  const hostUrl = base + 'chess_miniapp.html'
+    + '?color=white&timer=' + timer + '&game_id=' + gameId
+    + '&opp_name=Friend&opp_elo=1200&opp_level=1'
+    + '&my_name=' + encodeURIComponent(ME.name) + '&my_elo=' + ME.elo + '&my_level=' + ME.level;
+
+  document.getElementById('invite-game-id').textContent = gameId;
+  document.getElementById('invite-link').value = guestUrl;
+  document.getElementById('invite-modal').classList.add('show');
+  document.getElementById('invite-host-btn').onclick = () => {
+    document.getElementById('invite-modal').classList.remove('show');
+    window.location.href = hostUrl;
+  };
+  document.getElementById('invite-copy-btn').onclick = () => {
+    navigator.clipboard?.writeText(guestUrl).then(()=>{
+      document.getElementById('invite-copy-btn').textContent = '✅ Copied!';
+      setTimeout(()=>document.getElementById('invite-copy-btn').textContent='📋 Copy Link',2000);
+    }).catch(()=>{
+      document.getElementById('invite-link').select();
+      document.execCommand('copy');
+      document.getElementById('invite-copy-btn').textContent = '✅ Copied!';
+      setTimeout(()=>document.getElementById('invite-copy-btn').textContent='📋 Copy Link',2000);
+    });
+  };
+  const shareBtn = document.getElementById('invite-share-btn');
+  shareBtn.style.display = 'block';
+  shareBtn.onclick = () => {
+    const shareText = '♟️ Challenge me to chess! Join here:';
+    if(tg) tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(guestUrl)+'&text='+encodeURIComponent(shareText));
+    else if(navigator.share) navigator.share({title:'Chess Challenge',text:shareText,url:guestUrl});
+  };
 }
 
 // ── Edit profile ───────────────────────────────────────────────────────────
@@ -1357,10 +1484,7 @@ function onPuzzleClick(sqName){
         puzzleSolved = true;
         document.getElementById('puzzle-status').textContent = '✅ ' + expected.comment;
         document.getElementById('puzzle-status').style.color = 'var(--accent)';
-        // Update streak
-        ME.streak = (ME.streak||0)+1;
-        localStorage.setItem('me', JSON.stringify(ME));
-        document.getElementById('streak-count').textContent = ME.streak;
+        incrementStreak();
       }
     }
   } else {
@@ -1440,8 +1564,261 @@ function openLesson(key){
   localStorage.setItem('lb_members',JSON.stringify(members));
 })();
 
+// ── Open Learn ────────────────────────────────────────────────────────────
+function openLearn(url){
+  if(tg) tg.openLink(url);
+  else window.open(url,'_blank');
+}
+
+// ── Daily Puzzle ───────────────────────────────────────────────────────────
+const PUZZLES = [
+  { fen:'r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',
+    solution:['f3g5'], hint:'White to move — attack!', desc:'Italian Game trap' },
+  { fen:'rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq - 2 4',
+    solution:['c1d2'], hint:'White to move — defend!', desc:'Queen's Gambit' },
+  { fen:'r1bqkbnr/ppp2ppp/2np4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4',
+    solution:['f3g5'], hint:'Attack the weak f7!', desc:'Fried Liver Attack' },
+];
+let puzzleGame = null;
+let puzzleSolved = false;
+let puzzleSolution = [];
+let puzzleSelected = null;
+
+function openPuzzle(){
+  const p = PUZZLES[new Date().getDate() % PUZZLES.length];
+  puzzleSolution = p.solution;
+  puzzleSolved = false;
+  puzzleSelected = null;
+  document.getElementById('puzzle-modal-sub').textContent = p.hint;
+  document.getElementById('puzzle-status').textContent = '';
+  try { puzzleGame = new Chess(p.fen); } catch(e){ puzzleGame = new Chess(); }
+  renderPuzzleBoard();
+  document.getElementById('puzzle-modal').classList.add('show');
+}
+
+function renderPuzzleBoard(){
+  const el = document.getElementById('puzzle-board-big');
+  el.innerHTML = '';
+  const FILES = ['a','b','c','d','e','f','g','h'];
+  const PIECE_BASE = 'https://lichess1.org/assets/_bq5U0x/piece/maestro/';
+  for(let r=0;r<8;r++){
+    for(let f=0;f<8;f++){
+      const rank = 8-r, file = f;
+      const sqName = FILES[file]+rank;
+      const isLight = (file+rank)%2===1;
+      const sq = document.createElement('div');
+      sq.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;'
+        +(isLight?'background:#f0d9b5':'background:#b58863');
+      if(puzzleSelected===sqName) sq.style.background='rgba(205,210,106,0.8)';
+      const piece = puzzleGame.get(sqName);
+      if(piece){
+        const img = document.createElement('img');
+        img.src = PIECE_BASE + piece.color + piece.type.toUpperCase() + '.svg';
+        img.style.cssText = 'width:90%;height:90%;pointer-events:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))';
+        sq.appendChild(img);
+      }
+      sq.onclick = () => onPuzzleClick(sqName);
+      el.appendChild(sq);
+    }
+  }
+}
+
+function onPuzzleClick(sq){
+  if(puzzleSolved) return;
+  if(!puzzleSelected){
+    const p = puzzleGame.get(sq);
+    if(!p || p.color !== puzzleGame.turn()) return;
+    puzzleSelected = sq;
+    renderPuzzleBoard();
+  } else {
+    const moveStr = puzzleSelected + sq;
+    if(puzzleSolution.includes(moveStr)){
+      puzzleGame.move({from:puzzleSelected,to:sq,promotion:'q'});
+      puzzleSelected = null;
+      puzzleSolved = true;
+      renderPuzzleBoard();
+      document.getElementById('puzzle-status').textContent = '✅ Correct! Puzzle solved!';
+      document.getElementById('puzzle-status').style.color = '#4caf50';
+      ME.streak = (ME.streak||0)+1;
+      localStorage.setItem('me',JSON.stringify(ME));
+      document.getElementById('streak-count').textContent = ME.streak;
+    } else {
+      // Check if it's a valid move (wrong solution)
+      const lm = puzzleGame.moves({verbose:true}).map(m=>m.from+m.to);
+      if(lm.includes(moveStr)){
+        document.getElementById('puzzle-status').textContent = '❌ Not the best move. Try again!';
+        document.getElementById('puzzle-status').style.color = 'var(--red)';
+      }
+      puzzleSelected = null;
+      renderPuzzleBoard();
+    }
+  }
+}
+
+// ── Leaderboard — members only ─────────────────────────────────────────────
+function getMembers(){
+  // Register current user
+  let members = JSON.parse(localStorage.getItem('chess_members')||'[]');
+  const existing = members.find(m=>m.username===ME.username);
+  if(!existing){
+    members.push({
+      id: Date.now(), name:ME.name, username:ME.username,
+      flag:flagFor(ME.country), elo:ME.elo, level:ME.level,
+      wins:ME.wins, losses:ME.losses, draws:ME.draws,
+      online:true, trend:'+0', photo:ME.photo||null
+    });
+    localStorage.setItem('chess_members',JSON.stringify(members));
+  } else {
+    // Update existing
+    Object.assign(existing,{elo:ME.elo,wins:ME.wins,losses:ME.losses,draws:ME.draws,online:true});
+    localStorage.setItem('chess_members',JSON.stringify(members));
+  }
+  return members.sort((a,b)=>b.elo-a.elo);
+}
+
+
+// ── Nav tap animation ──────────────────────────────────────────────────────
+function navTap(el, page){
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  setTimeout(()=>el.classList.remove('pop'),400);
+  if(page==='play') openPlay('rapid');
+  else switchPage(page);
+}
+
+// ── Real daily streak ─────────────────────────────────────────────────────
+function updateDailyStreak(){
+  const today = new Date().toDateString();
+  const lastDay = localStorage.getItem('streak_last_day');
+  let streak = parseInt(localStorage.getItem('streak_count')||'0');
+  if(!lastDay){
+    streak = 0;
+  } else if(lastDay !== today){
+    const yesterday = new Date(Date.now()-86400000).toDateString();
+    if(lastDay !== yesterday){
+      streak = 0;
+      localStorage.setItem('streak_count','0');
+      addNotif('💔','Streak reset!','You missed a day — start fresh today.');
+    }
+  }
+  ME.streak = streak;
+  document.getElementById('streak-count').textContent = streak;
+  const cta = document.querySelector('.puzzle-cta-streak');
+  if(cta) cta.textContent = '🔥 ' + streak + ' solved';
+}
+function incrementStreak(){
+  const today = new Date().toDateString();
+  if(localStorage.getItem('streak_last_day') === today) return;
+  const newStreak = (parseInt(localStorage.getItem('streak_count')||'0'))+1;
+  ME.streak = newStreak;
+  localStorage.setItem('streak_count', String(newStreak));
+  localStorage.setItem('streak_last_day', today);
+  localStorage.setItem('me', JSON.stringify(ME));
+  document.getElementById('streak-count').textContent = newStreak;
+  const cta = document.querySelector('.puzzle-cta-streak');
+  if(cta) cta.textContent = '🔥 ' + newStreak + ' solved';
+  addNotif('🔥','Streak: '+newStreak+' days!','Great job solving today\'s puzzle!');
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────
+let notifications = [];
+let notifOpen = false;
+function loadNotifs(){
+  try{ notifications = JSON.parse(localStorage.getItem('chess_notifs')||'[]'); }
+  catch(e){ notifications=[]; }
+  refreshNotifDot();
+}
+function saveNotifs(){
+  localStorage.setItem('chess_notifs',JSON.stringify(notifications.slice(0,20)));
+}
+function addNotif(icon,title,msg){
+  notifications.unshift({id:Date.now(),icon,title,msg,time:'Just now',unread:true});
+  saveNotifs();
+  refreshNotifDot();
+}
+function refreshNotifDot(){
+  const unread = notifications.filter(n=>n.unread).length;
+  const dot = document.getElementById('notif-dot');
+  if(dot) unread>0 ? dot.classList.add('visible') : dot.classList.remove('visible');
+}
+function renderNotifList(){
+  const list = document.getElementById('notif-list');
+  if(!notifications.length){
+    list.innerHTML='<div class="notif-empty">No notifications yet 🕊️</div>';
+    return;
+  }
+  list.innerHTML='';
+  notifications.forEach(n=>{
+    const el=document.createElement('div');
+    el.className='notif-item'+(n.unread?' unread':'');
+    el.innerHTML=`<div class="notif-icon">${n.icon}</div>
+      <div class="notif-text">
+        <div class="notif-msg"><strong>${n.title}</strong><br>${n.msg}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>`;
+    el.onclick=()=>{ n.unread=false; saveNotifs(); renderNotifList(); refreshNotifDot(); };
+    list.appendChild(el);
+  });
+}
+function toggleNotifPopup(e){
+  e.stopPropagation();
+  const popup=document.getElementById('notif-popup');
+  notifOpen=!notifOpen;
+  if(notifOpen){ renderNotifList(); popup.classList.add('show'); }
+  else popup.classList.remove('show');
+}
+function clearNotifs(){
+  notifications.forEach(n=>n.unread=false);
+  saveNotifs(); renderNotifList(); refreshNotifDot();
+}
+document.addEventListener('click',e=>{
+  const popup=document.getElementById('notif-popup');
+  const btn=document.getElementById('notif-btn');
+  if(!popup||!btn) return;
+  if(notifOpen && !popup.contains(e.target) && !btn.contains(e.target)){
+    notifOpen=false;
+    popup.classList.remove('show');
+  }
+});
+
+// ── Draggable sheet handles ───────────────────────────────────────────────
+function makeDraggable(handle,sheet,overlay){
+  let startY=0,dragging=false;
+  handle.addEventListener('touchstart',e=>{
+    dragging=true; startY=e.touches[0].clientY;
+    sheet.style.transition='none';
+  },{passive:true});
+  handle.addEventListener('touchmove',e=>{
+    if(!dragging)return;
+    const dy=e.touches[0].clientY-startY;
+    if(dy>0) sheet.style.transform=`translateY(${dy}px)`;
+  },{passive:true});
+  handle.addEventListener('touchend',e=>{
+    if(!dragging)return; dragging=false;
+    const dy=e.changedTouches[0].clientY-startY;
+    sheet.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';
+    if(dy>90){ overlay.classList.remove('show'); sheet.style.transform=''; }
+    else sheet.style.transform='';
+  });
+}
 // ── Init ───────────────────────────────────────────────────────────────────
+loadNotifs();
+updateDailyStreak();
+if(!localStorage.getItem('welcomed')){
+  localStorage.setItem('welcomed','1');
+  addNotif('♟️','Welcome to Chess01!','Set up your profile and play your first game.');
+}
 initHome();
+getMembers();
+// Attach draggable handles
+setTimeout(()=>{
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    const sheet=overlay.querySelector('.modal-sheet');
+    const handle=sheet&&sheet.querySelector('.sheet-handle');
+    if(handle&&sheet) makeDraggable(handle,sheet,overlay);
+  });
+},200);
 </script>
 </body>
 </html>
