@@ -495,7 +495,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="sh-title">✏️ Edit Profile</div>
     <div class="sh-sub">Customize how others see you</div>
     <div class="ef"><div class="ef-lbl">Display Name</div><input class="ef-inp" id="ed-name" placeholder="Your name"/></div>
-    <div class="ef"><div class="ef-lbl">Username</div><input class="ef-inp" id="ed-uname" placeholder="@username"/></div>
+    <div class="ef"><div class="ef-lbl">Username <span style="font-size:10px;color:var(--dim);background:var(--s3);padding:2px 6px;border-radius:4px;margin-left:4px">Auto from Telegram</span></div><div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--dim2);font-size:14px" id="ed-uname-show">@—</div></div>
     <div class="ef"><div class="ef-lbl">Bio</div><input class="ef-inp" id="ed-bio" placeholder="Tell others about yourself…"/></div>
     <div class="ef">
       <div class="ef-lbl">Avatar</div>
@@ -730,20 +730,19 @@ function renderProfile(){
 // ═══ RANKING ═════════════════════════════════════════════════════════════════
 function renderRanking(){
   const members = ls('lb_members',[]);
-  // include self always
+  // Always include self
   if(!members.find(m=>m.username===ME.username)){
     members.push({id:ME.username,name:ME.name,username:ME.username,
       flag:flagFor(ME.country),elo:ME.elo,level:ME.level,
       wins:ME.wins,losses:ME.losses,draws:ME.draws,online:true,trend:'0'});
   }
-  // If still only 1 member, show mocks
-  const all = members.length < 2 ? [...MOCK_PLAYERS,{id:ME.username,name:ME.name,
-    username:ME.username,flag:flagFor(ME.country),elo:ME.elo,level:ME.level,
-    wins:ME.wins,losses:ME.losses,draws:ME.draws,online:true,trend:'0'}] : members;
-  const sorted = [...all].sort((a,b)=>b.elo-a.elo);
+  const sorted = [...members].sort((a,b)=>b.elo-a.elo);
 
   // Podium
   const pod=$('lb-podium'); pod.innerHTML='';
+  if(sorted.length<2){
+    pod.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim2)"><div style="font-size:42px;margin-bottom:10px">🏆</div><div style="font-size:14px">Be the first on the leaderboard!<br>Play games to earn your spot.</div></div>';
+  }
   if(sorted.length>=3){
     const order=[sorted[1],sorted[0],sorted[2]];
     const heights=['44px','62px','36px'];
@@ -1000,7 +999,7 @@ function openLearn(key){
 // ═══ EDIT PROFILE ════════════════════════════════════════════════════════════
 function openEdit(){
   $('ed-name').value=ME.name||'';
-  $('ed-uname').value=ME.username||'';
+  $('ed-uname-show').textContent='@'+(ME.username||'player');
   $('ed-bio').value=ME.bio||'';
   editAv=ME.avatar||'tg';
   editCountry=ME.country||'';
@@ -1024,8 +1023,8 @@ function pickAv(el,av){
 }
 function saveProfile(){
   const name=$('ed-name').value.trim()||ME.name;
-  const uname=$('ed-uname').value.trim().replace(/^@/,'')||ME.username;
-  ME.name=name; ME.username=uname;
+  const uname=ME.username; // username only from Telegram, never manual
+  ME.name=name;
   ME.bio=$('ed-bio').value.trim();
   ME.country=editCountry;
   ME.avatar=editAv;
