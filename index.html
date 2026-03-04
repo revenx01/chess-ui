@@ -1171,7 +1171,7 @@ function saveProfile(){
   initHome();
   renderProfile();
   toast('✅ Profile saved!');
-  if(tg) tg.sendData(JSON.stringify({type:'profile_update',name:ME.name,username:ME.username,country:ME.country}));
+  // profile saved locally
 }
 
 // ── Modal helper ───────────────────────────────────────────────────────────

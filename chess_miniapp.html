@@ -447,7 +447,7 @@ function renderPieces() {
 function onSquareClick(sqName) {
   if (gameOver) return;
   const isMyTurn = (game.turn() === 'w') === (myColor === 'white');
-  if (!isMyTurn && !botMode) return;
+  if (!isMyTurn) return;  // always block input when not player's turn
 
   // If we have a selected piece
   if (selectedSq) {
@@ -508,7 +508,9 @@ function executeMove(from, to, promo = null) {
   checkGameOver();
 
   // Bot response
-  if (botMode && !gameOver) {
+  // Bot moves only when it's NOT the player's turn
+  const nowMyTurn = (game.turn() === 'w') === (myColor === 'white');
+  if (botMode && !gameOver && !nowMyTurn) {
     setTimeout(botMove, 600 + Math.random() * 400);
   }
 }
@@ -539,6 +541,9 @@ function showPromotion(color) {
 // ── Simple Bot ─────────────────────────────────────────────────────────────
 function botMove() {
   if (gameOver) return;
+  // Only move if it's actually the bot's turn
+  const isBotTurn = (game.turn() === 'w') !== (myColor === 'white');
+  if (!isBotTurn) return;
   const moves = game.moves({ verbose:true });
   if (!moves.length) return;
   // Prefer captures, then center, then random
