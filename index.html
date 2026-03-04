@@ -490,10 +490,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     </div>
   </div>
 
-  <!-- Active games -->
-  <div class="sep" id="active-games-sep">Active Games</div>
-  <div class="active-games" id="active-games-list"></div>
-
   <!-- Stats -->
   <div class="sep">Your Stats</div>
   <div class="stats-row" style="margin-bottom:14px">
@@ -517,7 +513,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 
   <!-- Daily puzzle -->
   <div class="sep">Daily Puzzle</div>
-  <div class="puzzle-card" onclick="toast('Opening puzzle…')">
+  <div class="puzzle-card" onclick="openPuzzle()">
     <div class="puzzle-top">
       <div class="puzzle-board" id="puzzle-board"></div>
       <div class="puzzle-info">
@@ -535,28 +531,28 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
   <!-- Tips/News -->
   <div class="sep">Learn & News</div>
   <div class="news-scroll" style="margin-bottom:8px">
-    <div class="news-card" onclick="toast('Opening lesson…')">
+    <div class="news-card" onclick="openLesson('italian')">
       <div class="news-img">♟️</div>
       <div class="news-body">
         <div class="news-title">Master the Italian Game Opening</div>
         <div class="news-cat">📚 Opening Theory</div>
       </div>
     </div>
-    <div class="news-card" onclick="toast('Opening article…')">
+    <div class="news-card" onclick="openLesson('endgame')">
       <div class="news-img">⚔️</div>
       <div class="news-body">
         <div class="news-title">Top 5 Endgame Techniques to Know</div>
         <div class="news-cat">🏁 Endgames</div>
       </div>
     </div>
-    <div class="news-card" onclick="toast('Opening video…')">
+    <div class="news-card" onclick="openLesson('kingsindian')">
       <div class="news-img">🎬</div>
       <div class="news-body">
         <div class="news-title">How Magnus Wins With the King's Indian</div>
         <div class="news-cat">🎥 Video</div>
       </div>
     </div>
-    <div class="news-card" onclick="toast('Opening article…')">
+    <div class="news-card" onclick="openLesson('endgame')">
       <div class="news-img">🧠</div>
       <div class="news-body">
         <div class="news-title">Improve Your Tactics in 15 Minutes a Day</div>
@@ -691,7 +687,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="modal-title" id="play-modal-title">⚡ Play Rapid</div>
     <div class="modal-sub">Choose time control and color</div>
     <div class="tc-grid" id="tc-grid"></div>
-    <div style="margin-bottom:12px;font-size:12px;color:var(--dim2);text-transform:uppercase;letter-spacing:.6px">Play as</div>
+    <div id="color-pick-section"><div style="margin-bottom:12px;font-size:12px;color:var(--dim2);text-transform:uppercase;letter-spacing:.6px">Play as</div>
     <div class="color-pick">
       <div class="cp-btn sel" id="cp-white" onclick="selectColor('white')">
         ♔<div class="cp-lbl">White</div>
@@ -703,7 +699,48 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
         ♚<div class="cp-lbl">Black</div>
       </div>
     </div>
-    <button class="play-go" id="play-go-btn" onclick="startGame()">Find Game</button>
+    </div><button class="play-go" id="play-go-btn" onclick="startGame()">Find Game</button>
+  </div>
+</div>
+
+<!-- ══════ FRIEND PICKER MODAL ══════ -->
+<div class="modal-overlay" id="friend-pick-modal" onclick="closeModal('friend-pick-modal',event)">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="modal-title">👥 Challenge a Friend</div>
+    <div class="modal-sub">Pick who you want to play against</div>
+    <div id="fp-list" style="display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto"></div>
+    <div style="margin-top:14px;font-size:13px;color:var(--dim2);text-align:center">
+      Don't see your friend? Add them in the Friends tab first.
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PUZZLE MODAL ══════ -->
+<div class="modal-overlay" id="puzzle-modal" onclick="closeModal('puzzle-modal',event)">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="modal-title">🧩 Daily Puzzle</div>
+    <div class="modal-sub" id="puzzle-modal-sub">White to move — Mate in 2</div>
+    <div id="puzzle-status" style="text-align:center;font-size:14px;font-weight:600;
+      color:var(--accent);min-height:22px;margin-bottom:8px"></div>
+    <div id="puzzle-board-modal" style="width:100%;aspect-ratio:1;display:grid;
+      grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+      border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.5)"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="play-go" style="flex:1;padding:11px;font-size:15px" onclick="resetPuzzle()">↺ Reset</button>
+      <button class="play-go" style="flex:1;padding:11px;font-size:15px;background:var(--s3);color:var(--dim2)" onclick="showPuzzleSolution()">💡 Hint</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LEARN MODAL ══════ -->
+<div class="modal-overlay" id="learn-modal" onclick="closeModal('learn-modal',event)">
+  <div class="modal-sheet" id="learn-sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="sheet-handle"></div>
+    <div class="modal-title" id="learn-title">📚 Lesson</div>
+    <div id="learn-body" style="color:var(--dim2);font-size:14px;line-height:1.7"></div>
+    <button class="play-go" style="margin-top:16px" onclick="document.getElementById('learn-modal').classList.remove('show')">Close</button>
   </div>
 </div>
 
@@ -820,10 +857,7 @@ const ACHIEVEMENTS=[
   {icon:'🌍',name:'International',earned:false},
 ];
 
-const ACTIVE_GAMES=[
-  {opp:'Magnus C.',flag:'🇳🇴',time:'2:34',mode:'Rapid',mine:true,elo:2847},
-  {opp:'Hikaru N.',flag:'🇺🇸',time:'0:48',mode:'Blitz',mine:false,elo:2760,low:true},
-];
+const ACTIVE_GAMES=[];
 
 // ── Page switch ────────────────────────────────────────────────────────────
 function switchPage(page){
@@ -864,32 +898,16 @@ function initHome(){
   document.getElementById('stat-wins').textContent=ME.wins;
   document.getElementById('stat-losses').textContent=ME.losses;
   document.getElementById('stat-draws').textContent=ME.draws;
-  document.getElementById('stat-rank').textContent='#'+Math.floor(Math.random()*200+1);
+  // Compute rank from leaderboard members
+  const lbMembers = loadSaved('lb_members',[]);
+  const myRank = lbMembers.sort((a,b)=>b.elo-a.elo).findIndex(m=>m.username===ME.username)+1;
+  document.getElementById('stat-rank').textContent = myRank > 0 ? '#'+myRank : '#—';
   if(ME.photo){
     document.getElementById('hdr-avatar').innerHTML=`<img src="${ME.photo}">`;
   } else {
     const i=ME.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('hdr-avatar').textContent=i;
   }
-  // Active games
-  const gl=document.getElementById('active-games-list');
-  const sep=document.getElementById('active-games-sep');
-  if(!ACTIVE_GAMES.length){sep.style.display='none';return}
-  gl.innerHTML='';
-  ACTIVE_GAMES.forEach(g=>{
-    const d=document.createElement('div');d.className='agame';
-    d.innerHTML=`
-      <div class="agame-mini-board">${miniBoard()}</div>
-      <div class="agame-info">
-        <div class="agame-opp">${g.flag} ${g.opp}</div>
-        <div class="agame-meta"><span>${g.mode}</span><span>${g.elo} ELO</span></div>
-        <div class="agame-turn ${g.mine?'mine':'theirs'}">${g.mine?'✅ Your turn':'⏳ Their turn'}</div>
-      </div>
-      <div class="agame-timer ${g.low?'low':''}">${g.time}</div>`;
-    d.onclick=()=>toast('Opening game…');
-    gl.appendChild(d);
-  });
-  // Puzzle board
   buildPuzzleBoard();
   // Puzzle difficulty
   const pd=document.getElementById('puzzle-diff');
@@ -968,7 +986,17 @@ function renderProfile(){
 
 // ── Ranking ────────────────────────────────────────────────────────────────
 function renderRanking(){
-  const sorted=[...PLAYERS].sort((a,b)=>b.elo-a.elo);
+  // Merge PLAYERS mock with real miniapp members from localStorage
+  const members = loadSaved('lb_members',[]);
+  const allPlayers = [...members];
+  // Add mock players only if no real members yet
+  if(!allPlayers.length) allPlayers.push(...PLAYERS);
+  // Always include self
+  if(!allPlayers.find(m=>m.username===ME.username)){
+    allPlayers.push({id:0,name:ME.name,username:ME.username,flag:flagFor(ME.country),
+      elo:ME.elo,level:ME.level,wins:ME.wins,losses:ME.losses,draws:ME.draws,online:true,trend:'0'});
+  }
+  const sorted=[...allPlayers].sort((a,b)=>b.elo-a.elo);
   // Podium
   const pod=document.getElementById('lb-podium');
   pod.innerHTML='';
@@ -1087,15 +1115,23 @@ const TIME_CONTROLS={
   blitz: [{icon:'🌩️',time:'3 min',label:'Blitz',val:'180'},{icon:'🌩️',time:'3+2',label:'Blitz+',val:'182'},{icon:'🌩️',time:'5 min',label:'5 Min',val:'300'}],
   bullet:[{icon:'🔫',time:'1 min',label:'Bullet',val:'60'},{icon:'🔫',time:'1+1',label:'Bullet+',val:'61'},{icon:'🔫',time:'2+1',label:'2 Min',val:'121'}],
   bot:   [{icon:'🤖',time:'Easy',label:'Beginner',val:'bot_easy'},{icon:'🤖',time:'Medium',label:'Intermediate',val:'bot_med'},{icon:'🤖',time:'Hard',label:'Advanced',val:'bot_hard'}],
-  friend:[{icon:'👥',time:'Any',label:'Challenge',val:'friend'}],
+  friend:[{icon:'⚡',time:'10 min',label:'Rapid',val:'600'},{icon:'🌩️',time:'5 min',label:'Blitz',val:'300'},{icon:'🔫',time:'1 min',label:'Bullet',val:'60'}],
   custom:[{icon:'⏱️',time:'5 min',label:'Custom',val:'300'},{icon:'⏱️',time:'10 min',label:'Custom',val:'600'},{icon:'⏱️',time:'Custom',label:'Set time',val:'custom'}],
 };
 let selMode='rapid', selTC=null, selColor='white';
 
 function openPlay(mode){
   selMode=mode||'rapid';
-  const titles={rapid:'⚡ Rapid',blitz:'🌩️ Blitz',bullet:'🔫 Bullet',bot:'🤖 vs Bot',friend:'👥 vs Friend',custom:'⚙️ Custom'};
+  if(selMode==='friend'){
+    openFriendPicker();
+    return;
+  }
+  const titles={rapid:'⚡ Rapid',blitz:'🌩️ Blitz',bullet:'🔫 Bullet',bot:'🤖 vs Bot',custom:'⚙️ Custom'};
   document.getElementById('play-modal-title').textContent=titles[selMode]||'♟️ Play';
+  document.getElementById('tc-grid').style.display='grid';
+  document.getElementById('color-pick-section').style.display='block';
+  // Show/hide color pick for bot
+  document.getElementById('color-pick-section').style.opacity = selMode==='bot' ? '1' : '1';
   const grid=document.getElementById('tc-grid');
   grid.innerHTML='';
   const tcs=TIME_CONTROLS[selMode]||TIME_CONTROLS.rapid;
@@ -1111,8 +1147,51 @@ function openPlay(mode){
     };
     grid.appendChild(el);
   });
-  document.getElementById('play-go-btn').textContent=selMode==='friend'?'Challenge Friend':selMode==='bot'?'Play vs Bot':'Find Game';
+  document.getElementById('play-go-btn').textContent=selMode==='bot'?'▶ Play vs Bot':'🔍 Find Game';
   document.getElementById('play-modal').classList.add('show');
+}
+
+// ── Friend picker ──────────────────────────────────────────────────────────
+let selFriend = null;
+function openFriendPicker(){
+  selFriend = null;
+  const modal = document.getElementById('friend-pick-modal');
+  const list  = document.getElementById('fp-list');
+  list.innerHTML='';
+  if(!friends.length){
+    list.innerHTML=`<div class="empty-state" style="padding:20px;text-align:center;color:var(--dim2)">
+      <div style="font-size:36px;margin-bottom:8px">👥</div>
+      <div>No friends yet — add some in the Friends tab!</div>
+    </div>`;
+  } else {
+    friends.forEach(f=>{
+      const row=document.createElement('div');
+      row.className='fp-row';
+      row.innerHTML=`
+        <div class="lb-av">${avatarInner(f,38)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px">${f.flag||''} ${f.name}</div>
+          <div style="font-size:11px;color:var(--dim2)">⚡${f.elo} · Lv.${f.level}</div>
+        </div>
+        <button class="add-btn" style="font-size:12px;padding:6px 14px" onclick="selectFriend(${f.id})">Play</button>`;
+      list.appendChild(row);
+    });
+  }
+  modal.classList.add('show');
+}
+function selectFriend(id){
+  selFriend = friends.find(f=>f.id===id);
+  document.getElementById('friend-pick-modal').classList.remove('show');
+  if(!selFriend) return;
+  // Launch game vs friend (local pass-and-play)
+  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/+$/,'/');
+  const url = base+'chess_miniapp.html'
+    +'?color=white&timer=600&bot=0&local2p=1'
+    +'&opp_name='+encodeURIComponent(selFriend.name)
+    +'&opp_elo='+selFriend.elo+'&opp_level='+selFriend.level
+    +'&my_name='+encodeURIComponent(ME.name)
+    +'&my_elo='+ME.elo+'&my_level='+ME.level;
+  window.location.href=url;
 }
 function selectColor(c){
   selColor=c;
@@ -1121,17 +1200,23 @@ function selectColor(c){
 }
 function startGame(){
   document.getElementById('play-modal').classList.remove('show');
-  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/+$/, '/');
+  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/+$/,'/');
+  const isBot = selMode==='bot';
+  // Bot difficulty
+  const botDiff = {'bot_easy':'1','bot_med':'2','bot_hard':'3'}[selTC]||'1';
+  const botElo  = {'bot_easy':'800','bot_med':'1400','bot_hard':'2000'}[selTC]||'1200';
+  const timer   = isBot ? '600' : (selTC||'600');
   const boardUrl = base + 'chess_miniapp.html'
     + '?color=' + selColor
-    + '&timer=' + (selTC||'600')
-    + '&bot=' + (selMode==='bot'?'1':'0')
-    + '&opp_name=' + (selMode==='bot'?'Chess+Bot':'Opponent')
-    + '&opp_elo=1200&opp_level=1'
-    + '&my_name=' + encodeURIComponent(ME.name)
-    + '&my_elo=' + ME.elo
+    + '&timer=' + timer
+    + '&bot='   + (isBot?'1':'0')
+    + '&bot_diff=' + botDiff
+    + '&opp_name=' + (isBot?encodeURIComponent('Chess Bot'):'Opponent')
+    + '&opp_elo='  + (isBot?botElo:'1200')
+    + '&opp_level=1'
+    + '&my_name='  + encodeURIComponent(ME.name)
+    + '&my_elo='   + ME.elo
     + '&my_level=' + ME.level;
-  // Navigate directly - never use sendData here as it closes the mini app
   window.location.href = boardUrl;
 }
 
@@ -1187,6 +1272,173 @@ function toast(msg){
   clearTimeout(toastT);
   toastT=setTimeout(()=>el.classList.remove('show'),800);
 }
+
+// ── Daily Puzzle ──────────────────────────────────────────────────────────
+const PUZZLE = {
+  fen: 'r1b1kb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+  sub: 'White to move — Mate in 2',
+  solution: ['f7','h5f7'],  // scholar's mate idea: Qxf7#
+  moves: [
+    {from:'h5', to:'f7', comment:'Qxf7# — Checkmate!'}
+  ]
+};
+let puzzleGame = null;
+let puzzleMoveIdx = 0;
+let puzzleSolved = false;
+let puzzleSelectedSq = null;
+
+function openPuzzle(){
+  puzzleSolved = false;
+  puzzleMoveIdx = 0;
+  puzzleGame = new Chess(PUZZLE.fen);
+  document.getElementById('puzzle-modal-sub').textContent = PUZZLE.sub;
+  document.getElementById('puzzle-status').textContent = '';
+  buildPuzzleModalBoard();
+  document.getElementById('puzzle-modal').classList.add('show');
+}
+function resetPuzzle(){
+  puzzleSolved = false;
+  puzzleMoveIdx = 0;
+  puzzleGame = new Chess(PUZZLE.fen);
+  puzzleSelectedSq = null;
+  document.getElementById('puzzle-status').textContent = '';
+  buildPuzzleModalBoard();
+}
+function showPuzzleSolution(){
+  const m = PUZZLE.moves[0];
+  document.getElementById('puzzle-status').textContent = '💡 Try ' + m.from.toUpperCase() + ' → ' + m.to.toUpperCase();
+  document.getElementById('puzzle-status').style.color = 'var(--gold)';
+}
+function buildPuzzleModalBoard(){
+  const board = document.getElementById('puzzle-board-modal');
+  board.innerHTML='';
+  const files = ['a','b','c','d','e','f','g','h'];
+  for(let r=0;r<8;r++) for(let f=0;f<8;f++){
+    const rank = 8-r, file = f;
+    const sqName = files[file]+rank;
+    const isLight = (file+rank)%2===1;
+    const sq = document.createElement('div');
+    sq.style.cssText = `background:${isLight?'#f0d9b5':'#b58863'};display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;`;
+    sq.dataset.sq = sqName;
+    const piece = puzzleGame.get(sqName);
+    if(piece){
+      const img = document.createElement('img');
+      const key = piece.color+piece.type.toUpperCase();
+      img.src = 'https://lichess1.org/assets/_bq5U0x/piece/maestro/'+key+'.svg';
+      img.style.cssText = 'width:90%;height:90%;object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.4))';
+      sq.appendChild(img);
+    }
+    sq.onclick = () => onPuzzleClick(sqName);
+    board.appendChild(sq);
+  }
+}
+function onPuzzleClick(sqName){
+  if(puzzleSolved || !puzzleGame) return;
+  const expected = PUZZLE.moves[puzzleMoveIdx];
+  if(!puzzleSelectedSq){
+    const piece = puzzleGame.get(sqName);
+    if(piece && piece.color === puzzleGame.turn()){
+      puzzleSelectedSq = sqName;
+      // Highlight selected square
+      document.querySelectorAll('[data-sq]').forEach(el=>{
+        el.style.outline = el.dataset.sq===sqName ? '3px inset rgba(255,255,100,.7)' : 'none';
+      });
+    }
+    return;
+  }
+  // Try move
+  if(expected && puzzleSelectedSq === expected.from && sqName === expected.to){
+    const result = puzzleGame.move({from:puzzleSelectedSq, to:sqName, promotion:'q'});
+    if(result){
+      puzzleMoveIdx++;
+      puzzleSelectedSq = null;
+      buildPuzzleModalBoard();
+      if(puzzleMoveIdx >= PUZZLE.moves.length){
+        puzzleSolved = true;
+        document.getElementById('puzzle-status').textContent = '✅ ' + expected.comment;
+        document.getElementById('puzzle-status').style.color = 'var(--accent)';
+        // Update streak
+        ME.streak = (ME.streak||0)+1;
+        localStorage.setItem('me', JSON.stringify(ME));
+        document.getElementById('streak-count').textContent = ME.streak;
+      }
+    }
+  } else {
+    // Wrong move
+    document.getElementById('puzzle-status').textContent = '❌ Not the right move, try again!';
+    document.getElementById('puzzle-status').style.color = 'var(--red)';
+    puzzleSelectedSq = null;
+    document.querySelectorAll('[data-sq]').forEach(el=>el.style.outline='none');
+  }
+}
+
+// ── Learn content ──────────────────────────────────────────────────────────
+const LESSONS = {
+  italian: {
+    title: '♟️ The Italian Game',
+    body: `<h3 style="color:var(--text);font-family:'Playfair Display',serif;margin-bottom:12px">Opening Theory</h3>
+      <p>The Italian Game begins with <strong style="color:var(--accent)">1.e4 e5 2.Nf3 Nc6 3.Bc4</strong>. White aims to control the center and develop quickly.</p>
+      <br><p><strong style="color:var(--gold)">Key ideas:</strong></p>
+      <ul style="margin:10px 0 10px 20px;display:flex;flex-direction:column;gap:6px">
+        <li>Castle early to protect your king</li>
+        <li>Bishop on c4 eyes the f7 pawn</li>
+        <li>Play d3 for a solid setup or d4 for aggression</li>
+        <li>Avoid early pawn exchanges that open lines</li>
+      </ul>
+      <p>Common continuations: <strong>Giuoco Piano (3...Bc5)</strong> leads to sharp play, while <strong>Two Knights (3...Nf6)</strong> invites tactical complications.</p>`
+  },
+  endgame: {
+    title: '🏁 Top 5 Endgame Techniques',
+    body: `<h3 style="color:var(--text);font-family:'Playfair Display',serif;margin-bottom:12px">Essential Endgames</h3>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><strong style="color:var(--accent)">1. King Activity</strong><br>In endgames, activate your king immediately. It becomes a powerful attacking piece.</div>
+        <div><strong style="color:var(--accent)">2. Pawn Structure</strong><br>Connected pawns are stronger than isolated pawns. Push passed pawns aggressively.</div>
+        <div><strong style="color:var(--accent)">3. Rook Behind Passed Pawn</strong><br>Always place your rook behind your passed pawn, never in front.</div>
+        <div><strong style="color:var(--accent)">4. Opposition</strong><br>In king and pawn endgames, the player who does NOT have the opposition can often win.</div>
+        <div><strong style="color:var(--accent)">5. Zugzwang</strong><br>Force your opponent into a position where any move they make worsens their position.</div>
+      </div>`
+  },
+  tactics: {
+    title: '🧠 15-Minute Tactics Training',
+    body: `<h3 style="color:var(--text);font-family:'Playfair Display',serif;margin-bottom:12px">Daily Tactics</h3>
+      <p>Consistent tactics training is the fastest way to improve your chess rating.</p>
+      <br><div style="display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--s3);border-radius:10px;padding:12px"><strong style="color:var(--gold)">⚡ Forks</strong><br>Attack two pieces simultaneously with one piece. The knight fork is the most common.</div>
+        <div style="background:var(--s3);border-radius:10px;padding:12px"><strong style="color:var(--gold)">📌 Pins</strong><br>Pin a piece to its king or a more valuable piece so it cannot move without loss.</div>
+        <div style="background:var(--s3);border-radius:10px;padding:12px"><strong style="color:var(--gold)">🗜️ Skewers</strong><br>Like a pin but reversed — attack a valuable piece that must move, exposing a lesser piece.</div>
+        <div style="background:var(--s3);border-radius:10px;padding:12px"><strong style="color:var(--gold)">💥 Discovered Attacks</strong><br>Move one piece to reveal an attack from another. Can create devastating double threats.</div>
+      </div>`
+  },
+  kingsindian: {
+    title: "♟️ Magnus & the King's Indian",
+    body: `<h3 style="color:var(--text);font-family:'Playfair Display',serif;margin-bottom:12px">How Magnus Wins With It</h3>
+      <p>The King's Indian Defense: <strong style="color:var(--accent)">1.d4 Nf6 2.c4 g6 3.Nc3 Bg7 4.e4 d6</strong></p>
+      <br><p>Magnus uses it to create unbalanced positions where his superior endgame technique shines.</p>
+      <br><div style="display:flex;flex-direction:column;gap:10px">
+        <div><strong style="color:var(--gold)">Key Concept: Pawn Storm</strong><br>Black advances kingside pawns (f5-f4) while White attacks queenside. The side that breaks through first usually wins.</div>
+        <div><strong style="color:var(--gold)">The Fianchettoed Bishop</strong><br>The dark-squared bishop on g7 is Black's most important piece — keep it active and never trade it cheaply.</div>
+        <div><strong style="color:var(--gold)">Magnus's Tip</strong><br>"Play for the initiative. In the King's Indian, the player who sits passively loses."</div>
+      </div>`
+  }
+};
+function openLesson(key){
+  const lesson = LESSONS[key];
+  if(!lesson) return;
+  document.getElementById('learn-title').textContent = lesson.title;
+  document.getElementById('learn-body').innerHTML = lesson.body;
+  document.getElementById('learn-modal').classList.add('show');
+}
+
+// ── Register self in leaderboard ──────────────────────────────────────────
+(function registerSelf(){
+  const members = loadSaved('lb_members',[]);
+  const existing = members.findIndex(m=>m.username===ME.username);
+  const entry = {id:ME.username,name:ME.name,username:ME.username,
+    flag:flagFor(ME.country),elo:ME.elo,level:ME.level,
+    wins:ME.wins,losses:ME.losses,draws:ME.draws,online:true,trend:'0'};
+  if(existing>=0) members[existing]=entry; else members.push(entry);
+  localStorage.setItem('lb_members',JSON.stringify(members));
+})();
 
 // ── Init ───────────────────────────────────────────────────────────────────
 initHome();

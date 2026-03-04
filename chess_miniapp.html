@@ -328,7 +328,10 @@ const myElo     = params.get('my_elo')    || '1200';
 const myLevel   = params.get('my_level')  || '1';
 const timerSecs = parseInt(params.get('timer') || '600');
 const botMode   = params.get('bot') === '1';
+const local2p   = params.get('local2p') === '1';  // pass-and-play mode
+const botDiff   = parseInt(params.get('bot_diff') || '1'); // 1=easy,2=med,3=hard
 const flipped   = myColor === 'black';
+let local2pSide = 'white'; // whose turn in local 2p
 
 // ── Piece symbols ──────────────────────────────────────────────────────────
 const PIECE_BASE = 'https://lichess1.org/assets/_bq5U0x/piece/maestro/';
@@ -446,8 +449,11 @@ function renderPieces() {
 // ── Click Logic ────────────────────────────────────────────────────────────
 function onSquareClick(sqName) {
   if (gameOver) return;
-  const isMyTurn = (game.turn() === 'w') === (myColor === 'white');
-  if (!isMyTurn) return;  // always block input when not player's turn
+  // In local 2p mode, always allow current side to move
+  if(!local2p){
+    const isMyTurn = (game.turn() === 'w') === (myColor === 'white');
+    if (!isMyTurn) return;
+  }
 
   // If we have a selected piece
   if (selectedSq) {
@@ -541,17 +547,71 @@ function showPromotion(color) {
 // ── Simple Bot ─────────────────────────────────────────────────────────────
 function botMove() {
   if (gameOver) return;
-  // Only move if it's actually the bot's turn
   const isBotTurn = (game.turn() === 'w') !== (myColor === 'white');
   if (!isBotTurn) return;
   const moves = game.moves({ verbose:true });
   if (!moves.length) return;
-  // Prefer captures, then center, then random
-  const captures = moves.filter(m => m.flags.includes('c'));
-  const pick = captures.length && Math.random() > 0.3
-    ? captures[Math.floor(Math.random()*captures.length)]
-    : moves[Math.floor(Math.random()*moves.length)];
-  executeMove(pick.from, pick.to, pick.promotion);
+
+  let pick;
+  if(botDiff === 1){
+    // Easy: mostly random, sometimes captures
+    const captures = moves.filter(m => m.flags.includes('c'));
+    pick = captures.length && Math.random() > 0.6
+      ? captures[Math.floor(Math.random()*captures.length)]
+      : moves[Math.floor(Math.random()*moves.length)];
+  } else if(botDiff === 2){
+    // Medium: prefer captures > center control > random
+    const captures = moves.filter(m => m.flags.includes('c'));
+    const centerSqs = ['d4','d5','e4','e5','c4','c5','f4','f5'];
+    const center = moves.filter(m => centerSqs.includes(m.to));
+    const checks = moves.filter(m => m.flags.includes('+'));
+    if(checks.length && Math.random()>0.5) pick=checks[Math.floor(Math.random()*checks.length)];
+    else if(captures.length && Math.random()>0.3) pick=captures[Math.floor(Math.random()*captures.length)];
+    else if(center.length && Math.random()>0.4) pick=center[Math.floor(Math.random()*center.length)];
+    else pick=moves[Math.floor(Math.random()*moves.length)];
+  } else {
+    // Hard: minimax depth 2
+    pick = getBestMove(2);
+  }
+  if(!pick) pick=moves[Math.floor(Math.random()*moves.length)];
+  executeMove(pick.from, pick.to, pick.promotion||'q');
+}
+
+function scoreBoard(){
+  const vals={p:100,n:320,b:330,r:500,q:900,k:0};
+  let score=0;
+  game.board().forEach(row=>row.forEach(p=>{
+    if(!p)return;
+    const v=vals[p.type]||0;
+    score += p.color==='w' ? v : -v;
+  }));
+  return score;
+}
+function getBestMove(depth){
+  const botColor = myColor==='white'?'b':'w';
+  const moves = game.moves({verbose:true});
+  let best=null, bestScore=-Infinity;
+  moves.forEach(m=>{
+    game.move(m);
+    const score = -minimax(depth-1, -Infinity, Infinity, botColor==='w'?'b':'w');
+    game.undo();
+    if(score>bestScore){bestScore=score;best=m;}
+  });
+  return best;
+}
+function minimax(depth, alpha, beta, turn){
+  if(depth===0||game.game_over()) return scoreBoard()*(turn==='w'?1:-1);
+  const moves=game.moves({verbose:true});
+  let best=-Infinity;
+  for(const m of moves){
+    game.move(m);
+    const score=-minimax(depth-1,-beta,-alpha,turn==='w'?'b':'w');
+    game.undo();
+    best=Math.max(best,score);
+    alpha=Math.max(alpha,score);
+    if(alpha>=beta)break;
+  }
+  return best;
 }
 
 // ── Game Over ──────────────────────────────────────────────────────────────
@@ -610,6 +670,17 @@ function updateStatus() {
   const bar = document.getElementById('status-bar');
   if (gameOver) return;
   const turn   = game.turn() === 'w' ? 'White' : 'Black';
+  if(local2p){
+    const who = game.turn()==='w' ? (myColor==='white'?myName:oppName) : (myColor==='black'?myName:oppName);
+    if(game.in_check()){
+      bar.textContent = `⚠️ ${turn} in check! — ${who}'s turn`;
+      bar.className='check';
+    } else {
+      bar.textContent = `📱 Pass device — ${who}'s turn`;
+      bar.className='';
+    }
+    return;
+  }
   const isMe   = (game.turn() === 'w') === (myColor === 'white');
   const prefix = isMe ? '✅ Your turn' : `⏳ ${oppName}'s turn`;
   if (game.in_check()) {
