@@ -1168,9 +1168,8 @@ function saveProfile(){
   ME.avatar  =editAvatar;
   localStorage.setItem('me',JSON.stringify(ME));
   document.getElementById('edit-modal').classList.remove('show');
-  initHome();
-  renderProfile();
   toast('✅ Profile saved!');
+  setTimeout(()=>{ initHome(); renderProfile(); }, 50);
   // profile saved locally
 }
 
@@ -1186,7 +1185,7 @@ function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('show');
   clearTimeout(toastT);
-  toastT=setTimeout(()=>el.classList.remove('show'),1500);
+  toastT=setTimeout(()=>el.classList.remove('show'),800);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
