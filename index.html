@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Chess</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root {
@@ -877,21 +878,32 @@ const params = new URLSearchParams(window.location.search);
 
 // ── Load saved profile ─────────────────────────────────────────────────────
 function loadSaved(key,def){try{return JSON.parse(localStorage.getItem(key))||def}catch{return def}}
-let ME = loadSaved('me',{
-  name:     tgUser?.first_name || params.get('name') || 'Player',
-  username: tgUser?.username   || params.get('uname')|| 'player',
-  photo:    tgUser?.photo_url  || null,
+// Load saved profile, but always refresh name/photo from Telegram if available
+let ME = loadSaved('me', {
+  name:     'Player',
+  username: 'player',
+  photo:    null,
   bio:      '',
-  country:  params.get('country') || '',
+  country:  '',
   avatar:   'tg',
-  elo:      parseInt(params.get('elo')   ||'1200'),
-  level:    parseInt(params.get('level') ||'1'),
-  xp:       parseInt(params.get('xp')   ||'0'),
-  wins:     parseInt(params.get('wins')  ||'0'),
-  losses:   parseInt(params.get('losses')||'0'),
-  draws:    parseInt(params.get('draws') ||'0'),
-  streak:   7,
+  elo:      1200,
+  level:    1,
+  xp:       0,
+  wins:     0,
+  losses:   0,
+  draws:    0,
+  streak:   0,
 });
+// Always override with fresh Telegram data when available
+if(tgUser){
+  ME.name     = tgUser.first_name + (tgUser.last_name ? ' '+tgUser.last_name : '');
+  ME.username = tgUser.username || ME.username;
+  ME.photo    = tgUser.photo_url || ME.photo;
+  localStorage.setItem('me', JSON.stringify(ME));
+} else if(params.get('name')) {
+  ME.name     = params.get('name');
+  ME.username = params.get('uname') || ME.username;
+}
 let friends = loadSaved('chess_friends',[]);
 
 // ── Countries ──────────────────────────────────────────────────────────────
@@ -1181,7 +1193,7 @@ function removeFriend(id,e){
 }
 function challengeFriend(username,e){
   e?.stopPropagation();
-  if(tg) tg.sendData(JSON.stringify({type:'challenge',username}));
+  // challenge via bot
   toast(`⚔️ Challenge sent to @${username}!`);
   setTimeout(()=>switchPage('home'),1200);
 }
