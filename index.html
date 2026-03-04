@@ -1065,7 +1065,7 @@ function doAddFriend(){
   document.getElementById('add-input').value='';
   renderFriends();
   toast(`✅ ${found.name} added!`);
-  if(tg) tg.sendData(JSON.stringify({type:'add_friend',username:val}));
+  // friend saved locally
 }
 function removeFriend(id,e){
   e?.stopPropagation();
@@ -1121,23 +1121,18 @@ function selectColor(c){
 }
 function startGame(){
   document.getElementById('play-modal').classList.remove('show');
-  // Open the chess board mini app directly
-  const base = window.location.origin + window.location.pathname.replace('index.html','');
-  const boardUrl = base + 'chess_miniapp.html?color=' + selColor + '&timer=' + (selTC||'600')
+  const base = window.location.origin + window.location.pathname.replace('index.html','').replace(/\/+$/, '/');
+  const boardUrl = base + 'chess_miniapp.html'
+    + '?color=' + selColor
+    + '&timer=' + (selTC||'600')
     + '&bot=' + (selMode==='bot'?'1':'0')
     + '&opp_name=' + (selMode==='bot'?'Chess+Bot':'Opponent')
     + '&opp_elo=1200&opp_level=1'
     + '&my_name=' + encodeURIComponent(ME.name)
-    + '&my_elo=' + ME.elo + '&my_level=' + ME.level;
-  if(tg){
-    // Notify bot
-    tg.sendData(JSON.stringify({type:'play',mode:selMode,tc:selTC,color:selColor}));
-    // Open board
-    tg.openLink(boardUrl);
-  } else {
-    window.location.href = boardUrl;
-  }
-  if(selMode==='friend') toast('⚔️ Challenge sent!');
+    + '&my_elo=' + ME.elo
+    + '&my_level=' + ME.level;
+  // Navigate directly - never use sendData here as it closes the mini app
+  window.location.href = boardUrl;
 }
 
 // ── Edit profile ───────────────────────────────────────────────────────────
